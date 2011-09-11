@@ -7,7 +7,7 @@
 use Const;
 package ClosedTree;
 
-$DBG = 0;
+$DBG = 3;
 
 sub new
 {
@@ -43,13 +43,15 @@ sub make_final_board_state($)
 	my $initial = shift();
 	my @final;
 
-	my @allchars = split( //, '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0');
+	my $init2 = $initial;
+	$init2 =~ s/[=0]//g;
+	my @candidates = sort(split(//, $init2));
 
 	my $c = 0;
 	for( $c = 0; $c < length($initial); $c++ )
 	{
 		if ( substr($initial, $c, 1) ne '=' ) {
-			$final[$c] = $allchars[$c];
+			$final[$c] = shift(@candidates);
 		} else {
 			$final[$c] = '=';
 		}
@@ -288,6 +290,16 @@ sub renew_fixed_panel()
 		}
 	}
 	print "\n" if($self->{DBG} >= 3);
+}
+
+sub where_do_i_move_to()
+{
+	my $self = shift();
+
+	#左上から右下へ	
+	#列はどこまでそろったか
+	#行はどこまで揃ったか
+	
 }
 
 1;

@@ -7,10 +7,10 @@ use PuzzleRecorder;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 
-$DBG = 0;
+$DBG = 3;
 $| = 1;
 $start_game = 0;
-$end_game = 49;
+$end_game = 0;
 #$start_game = 6;
 #$end_game = 6;
 #$start_game = 0;
@@ -26,7 +26,7 @@ my @GAMES;
 #データ読み込み
 #print STDERR "Reading data...\n";
 my $fh;
-open($fh, "<resources/input.txt") || die();
+open($fh, "<resources/input2.txt") || die();
 my $in = <$fh>; chomp($in);
 my ($lim_l, $lim_r, $lim_u, $lim_d) = split(/ /, $in);
 my $in = <$fh>; chomp($in);
@@ -36,6 +36,7 @@ while(<$fh>)
 {
 	my $in = $_;
 	chomp($in);
+	next if($in =~ /^#/);
 	$GAMES[$games_counter] = $in;
 	if( $games_counter % 1000 == 0) {
 #		print STDERR "$games_counter";
@@ -227,6 +228,17 @@ sub solve_puzzle($$)
 			$playing_flag = 0;
 			$ct->{Solved} = 1;
 		} 
+		my $temp_board_start = $ct->{Board};
+		my $temp_board_end   = $ct->{Goal};
+		$temp_board_start =~ s/[=0]//g;
+		$temp_board_end   =~ s/[0=]//g;
+		print "N:$temp_board_start / E:$temp_board_end\n";
+		if( $temp_board_start eq $temp_board_end )
+		{
+			$playing_flag = 0;
+			$ct->{Solved} = 1;
+		} 
+		
 		#if ($c > $max_counter || (time() - $start_time > $max_timer_sec))
 		if ($end_time > $max_timer_sec)
 		{
