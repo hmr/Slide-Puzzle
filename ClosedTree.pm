@@ -7,7 +7,7 @@
 use Const;
 package ClosedTree;
 
-$DBG = 3;
+$DBG = 0;
 
 sub new
 {
@@ -101,24 +101,24 @@ sub make_tree($$$)
 		
 		### ひだり！
 		$tree->{$c}->{L}->{name} = "L";
-		#そのパネルから左に移動できる
-		if( $c - 1 >= 0 && ($c % $width != 0) ) {
+		#そのパネルから左に移動できる(= 左端でない、左が移動不可パネルでない)
+		if( $c - 1 >= 0 && ($c % $width != 0) && (substr($board, $c - 1, 1) ne '=') ) {
 			$tree->{$c}->{L}->{position} = $c - 1;
 		} else {
 			$tree ->{$c}->{L}->{position} = -1;
 		}
 		### みぎ！
 		$tree->{$c}->{R}->{name} = "R";
-		#そのパネルから右に移動できる
-		if ( $c + 1 < $length && ( $c % $width != $width - 1 ) ) {
+		#そのパネルから右に移動できる(= 右端でない、右が移動不可パネルでない)
+		if ( $c + 1 < $length && ( $c % $width != $width - 1 ) && (substr($board, $c + 1, 1) ne '=') ) {
 			$tree->{$c}->{R}->{position} = $c + 1;
 		} else {
 			$tree->{$c}->{R}->{position} = -1;
 		}
 		### うえ！
 		$tree->{$c}->{U}->{name} = "U";
-		#そのパネルから上に移動できる
-		if ( $c - $width >= 0 )
+		#そのパネルから上に移動できる(= 先頭行でない、上が移動不可パネルでない)
+		if ( ($c - $width > 0) && (substr($board, $c - $width, 1) ne '=') )
 		{
 			$tree->{$c}->{U}->{position} = $c - $width;
 		} else {
@@ -126,8 +126,8 @@ sub make_tree($$$)
 		}
 		### した！
 		$tree->{$c}->{D}->{name} = "D";
-		#そのパネルから下に移動できる
-		if ( $c + $width < $length )
+		#そのパネルから下に移動できる(= 最終行でない、下が移動不可パネルでない)
+		if ( ($c + $width < $length) && (substr($board, $c + $width, 1) ne '=') )
 		{
 			$tree->{$c}->{D}->{position} = $c + $width;
 		} else {
@@ -139,7 +139,6 @@ sub make_tree($$$)
 			print "  node($c): pos:$tree->{$c}->{pos_me} val_str:$tree->{$c}->{val_str} val_num:$tree->{$c}->{val_num} fixed:$tree->{$c}->{fixed} ";
 			print "L->$tree->{$c}->{L}->{position} / R->$tree->{$c}->{R}->{position} / U->$tree->{$c}->{U}->{position} / D->$tree->{$c}->{D}->{position}\n";
 		}
-		
 	}
 	
 	return $tree;
@@ -170,13 +169,13 @@ sub select_where_to_move()
 	my $val_u = ($last_move !~ /D/) ? $tree->{$pos_u}->{val_num} : 0;		#スコアはとりあえずは選択肢の値
 	my $val_d = ($last_move !~ /U/) ? $tree->{$pos_d}->{val_num} : 0;		#スコアはとりあえずは選択肢の値
 	
-	$val_r = $max_val - $val_r if($val_r > 0);	#右側パネル=>最大値との差
-	$val_d = $max_val - $val_d if($val_d > 0);	#下側パネル=>最大値との差
+#	$val_r = $max_val - $val_r if($val_r > 0);	#右側パネル=>最大値との差
+#	$val_d = $max_val - $val_d if($val_d > 0);	#下側パネル=>最大値との差
 
-	$val_l = $fix_l ? 0 : $val_l;	#定位置フラグがたってればスコアは1で決め打ち
-	$val_r = $fix_r ? 0 : $val_r;	#定位置フラグがたってればスコアは1で決め打ち
-	$val_u = $fix_u ? 0 : $val_u;	#定位置フラグがたってればスコアは1で決め打ち
-	$val_d = $fix_d ? 0 : $val_d;	#定位置フラグがたってればスコアは1で決め打ち
+	$val_l = ( ($val_l > 0) && ($fix_l) ) ? 0.5 : $val_l;	#定位置フラグがたってればスコアは決め打ち
+	$val_r = ( ($val_r > 0) && ($fix_r) ) ? 0.5 : $val_r;	#定位置フラグがたってればスコアは決め打ち
+	$val_u = ( ($val_u > 0) && ($fix_u) ) ? 0.5 : $val_u;	#定位置フラグがたってればスコアは決め打ち
+	$val_d = ( ($val_d > 0) && ($fix_d) ) ? 0.5 : $val_d;	#定位置フラグがたってればスコアは決め打ち
 	
 	my $str_l = ($last_move !~ /R/) ? $tree->{$pos_l}->{val_str} : "*";	#左側パネルの文字
 	my $str_r = ($last_move !~ /L/) ? $tree->{$pos_r}->{val_str} : "*";	#右側パネルの文字
@@ -199,7 +198,8 @@ sub select_where_to_move()
 	#左右比較
 #	print "      1: val_l=$val_l > val_r=$val_r\n";
 	if ( $val_l > $val_r ) {
-		$selected_val = $val_l;
+		$selected_val = $val_l;		
+		
 		$selected = $tree->{$pos_l};
 		$selected->{move_name} = 'L';
 	} else {
@@ -229,66 +229,6 @@ sub bound_for_where()
 {
 	#とりあえずの戦略として左上から左下の1列
 }
-
-sub select_where_to_move2()
-{
-#	print "  Selecting where to move2...\n";
-	my $self = shift();
-	
-	my $tree = $self->{Tree};
-	my $pos = $tree->{pos_now};
-	my $last_move = $self->{Last_Move};
-	
-	my $pos_l = $tree->{$pos}->{L}->{position};	#左選択肢のポジション
-	my $pos_r = $tree->{$pos}->{R}->{position};	#右選択肢のポジション
-	my $pos_u = $tree->{$pos}->{U}->{position};	#上選択肢のポジション
-	my $pos_d = $tree->{$pos}->{D}->{position};	#下選択肢のポジション
-	
-	my $val_l = ($last_move !~ /R/) ? $tree->{$pos_l}->{val_num} : 0;	#左側パネル=>選択肢の値
-	my $val_r = ($last_move !~ /L/) ? $tree->{$pos_r}->{val_num} : 0;	#右側パネル=>最大値との差
-	my $val_u = ($last_move !~ /D/) ? $tree->{$pos_u}->{val_num} : 0;	#上側パネル=>選択肢の値
-	my $val_d = ($last_move !~ /U/) ? $tree->{$pos_d}->{val_num} : 0;	#下側パネル=>最大値との差
-	
-#	print "    Last Move = $last_move / Pos of Now: $pos / L:p=$pos_l($val_l) / R:p=$pos_r($val_r) / U:p=$pos_u($val_u) / D:p=$pos_d($val_d)\n";
-
-	# 詰み状態
-	if( $val_l <= 0 && $val_r <= 0 && $val_u <= 0 && $val_d <= 0 ) {
-#		print "      !!!! This Game can't be solved !!! Sorry, We'll skip to next game...\n";
-		$selected->{No_Way} = 1;
-		return $selected;
-	}
-
-	#移動選択肢の中で一番大きな値を探す
-	my $selected_val;
-	my $selected;
-	#左右比較
-#	print "      1: val_l=$val_l > val_r=$val_r\n";
-	if ( $val_l > $val_r ) {
-		$selected_val = $val_l;
-		$selected = $tree->{$pos_l};
-		$selected->{move_name} = 'L';
-	} else {
-		$selected_val = $val_r;
-		$selected = $tree->{$pos_r};	
-		$selected->{move_name} = 'R';
-	}
-	#上と比較
-#	print "      2: selected=$selected_val < val_u=$val_u\n";
-	if ($selected_val < $val_u) {
-		$selected_val = $val_u;
-		$selected = $tree->{$pos_u};
-		$selected->{move_name} = 'U';
-	}
-	#下と比較
-#	print "      3: selected=$selected_val < val_d=$val_d\n";
-	if ($selected_val < $val_d) {
-		$selected_val = $val_d;
-		$selected = $tree->{$pos_d};
-		$selected->{move_name} = 'D';
-	}
-	return $selected;
-}
-
 
 sub move_1step($)
 {
@@ -337,13 +277,17 @@ sub renew_fixed_panel()
 	{
 		if( $board_now[$c] eq $board_end[$c])
 		{
-			$self->{Tree}->{$c}->{Finished} = 1;
+			print "1" if($self->{DBG} >= 3);
+			$self->{Tree}->{$c}->{fixed} = 1;
+			
 		}
 		else
 		{
-			$self->{Tree}->{$c}->{Finished} = 0;
+			print "0" if($self->{DBG} >= 3);
+			$self->{Tree}->{$c}->{fixed} = 0;
 		}
 	}
+	print "\n" if($self->{DBG} >= 3);
 }
 
 1;

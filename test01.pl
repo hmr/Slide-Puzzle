@@ -7,14 +7,16 @@ use PuzzleRecorder;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 
-$DBG = 3;
+$DBG = 0;
 $| = 1;
-$start_game = 6;
-$end_game = 6;
+$start_game = 0;
+$end_game = 49;
+#$start_game = 6;
+#$end_game = 6;
 #$start_game = 0;
 #$end_game = 4999;
 $max_counter = 30000;
-$max_timer_sec = 9;
+$max_timer_sec = 2;
 
 $start_time = "";
 $end_time = "";
